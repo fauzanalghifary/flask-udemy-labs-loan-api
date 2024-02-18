@@ -115,6 +115,14 @@ def save_loan_to_database(loan_request, partner_secret):
     return loan
 
 
+class CollateralSchema(Schema):
+    brand = fields.String(required=True, validate=validate.Length(max=50))
+    model = fields.String(required=True, validate=validate.Length(max=50))
+    manufacturing_year = fields.Integer(
+        required=True, validate=validate.Range(min=2015, max=datetime.date.today().year)
+    )
+
+
 class LoanSchema(Schema):
     principal_amount = fields.Integer(
         required=True, validate=validate.Range(min=100, max=99999)
@@ -123,6 +131,8 @@ class LoanSchema(Schema):
     term_months = fields.Integer(
         required=True, validate=validate.OneOf([3, 6, 9, 12, 15, 18, 24])
     )
+
+    collateral = fields.Nested(CollateralSchema, required=True)
 
 
 loan_schema = LoanSchema()

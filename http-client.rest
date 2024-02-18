@@ -4,12 +4,12 @@ partner-secret: 'partner-red'
 Content-Type: application/json
 
 {
-  "principal_amount": 180000,
+  "principal_amount": 2000,
   "term_months": 12,
   "collateral": {
     "brand": "Toyota",
     "model": "Camry",
-    "manufacturing_year": 2022
+    "manufacturing_year": 2010
   },
   "customer": {
     "name": "Clark Kent 2",
