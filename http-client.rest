@@ -9,11 +9,11 @@ Content-Type: application/json
   "collateral": {
     "brand": "Toyota",
     "model": "Camry",
-    "manufacturing_year": 2010
+    "manufacturing_year": 2022
   },
   "customer": {
-    "name": "Clark Kent 2",
-    "birth_date": "1980-11-19",
+    "name": "Clark Kent",
+    "birth_date": "2002-11-19",
     "monthly_income": 4500,
     "id_number": "7482-4889"
   }

@@ -123,6 +123,25 @@ class CollateralSchema(Schema):
     )
 
 
+class CustomerSchema(Schema):
+    @staticmethod
+    def validate_age(birth_date):
+        parsed_birth_date = datetime.datetime.strptime(birth_date, '%Y-%m-%d')
+        today = datetime.date.today()
+        age = today.year - parsed_birth_date.year
+
+        if age < 18 or age > 70:
+            raise ValidationError("Age must between 18-70 years, currently " + str(age))
+
+    name = fields.String(required=True, validate=validate.Regexp(regex='^[A-Za-z ]{3,50}$'))
+
+    monthly_income = fields.Integer(required=True, validate=validate.Range(min=500))
+
+    id_number = fields.String(required=True, validate=validate.Length(max=50))
+
+    birth_date = fields.String(required=True, validate=validate_age)
+
+
 class LoanSchema(Schema):
     principal_amount = fields.Integer(
         required=True, validate=validate.Range(min=100, max=99999)
@@ -133,6 +152,7 @@ class LoanSchema(Schema):
     )
 
     collateral = fields.Nested(CollateralSchema, required=True)
+    customer = fields.Nested(CustomerSchema, required=True)
 
 
 loan_schema = LoanSchema()
