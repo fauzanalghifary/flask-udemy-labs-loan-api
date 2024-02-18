@@ -134,11 +134,8 @@ class CustomerSchema(Schema):
             raise ValidationError("Age must between 18-70 years, currently " + str(age))
 
     name = fields.String(required=True, validate=validate.Regexp(regex='^[A-Za-z ]{3,50}$'))
-
     monthly_income = fields.Integer(required=True, validate=validate.Range(min=500))
-
     id_number = fields.String(required=True, validate=validate.Length(max=50))
-
     birth_date = fields.String(required=True, validate=validate_age)
 
 
