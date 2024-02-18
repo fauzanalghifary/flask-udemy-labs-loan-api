@@ -5,6 +5,7 @@ from sqlalchemy import and_
 import datetime
 import uuid
 import math
+import werkzeug
 
 app = Flask(__name__)
 
@@ -136,3 +137,20 @@ def track_loan():
     return jsonify(
         existing_loan.to_dict()
     ), 200
+
+
+@app.errorhandler(werkzeug.exceptions.BadRequest)
+@app.errorhandler(TypeError)
+def handle_bad_request(ex):
+    return jsonify(
+        error_message='Bad request parameter / body. Please re-check submitted data.',
+        detail=str(ex)
+    ), 400
+
+
+@app.errorhandler(Exception)
+def handle_any_uncaught_exception(ex):
+    return jsonify(
+        error_message='Server cannot process request.',
+        detail=str(ex)
+    ), 500
