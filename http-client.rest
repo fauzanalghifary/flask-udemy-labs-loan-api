@@ -1,6 +1,6 @@
 ### Create a loan
 POST {{BASE_URL}}/api/loan
-partner-secret: 'partner-blue'
+partner-secret: 'partner-red'
 Content-Type: application/json
 
 {
@@ -12,13 +12,13 @@ Content-Type: application/json
     "manufacturing_year": 2022
   },
   "customer": {
-    "name": "Clark Kent",
-    "birth_date": "24-11-2004",
+    "name": "Clark Kent 2",
+    "birth_date": "1980-11-19",
     "monthly_income": 4500,
     "id_number": "7482-4889"
   }
 }
 
 ### Get loan by id
-GET {{BASE_URL}}/api/loan?loan_id=62110039-6c6a-4acc-b502-4d0508411c25
+GET {{BASE_URL}}/api/loan?loan_id=ee893acb-ad5c-4b0c-bc85-6c69a90def17zz
 partner-secret: 'partner-blue'

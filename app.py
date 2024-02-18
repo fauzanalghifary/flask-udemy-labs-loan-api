@@ -116,6 +116,8 @@ def save_loan_to_database(loan_request, partner_secret):
 
 @app.route('/api/loan', methods=['POST'])
 def submit_loan():
+    validate_loan_for_business(request.json)
+
     saved_loan = save_loan_to_database(
         request.json, request.headers['partner_secret']
     )
@@ -133,6 +135,13 @@ def track_loan():
         and_(Loan.loan_id == request.args['loan_id'], Loan.created_by == request.headers['partner_secret']))
 
     existing_loan = filter_loan.first()
+
+    if existing_loan is None:
+        raise LoanBusinessException(
+            error_message="Loan does not exists",
+            status_code=403,
+            detail="Loan id " + request.args['loan_id'] + " does not exists or does not belong to you"
+        )
 
     return jsonify(
         existing_loan.to_dict()
@@ -154,3 +163,52 @@ def handle_any_uncaught_exception(ex):
         error_message='Server cannot process request.',
         detail=str(ex)
     ), 500
+
+
+class LoanBusinessException(Exception):
+    def __init__(self, error_message, detail, status_code=None):
+        self.error_message = error_message
+        self.detail = detail
+
+        if status_code is not None:
+            self.status_code = status_code
+        else:
+            self.status_code = 500
+
+    def to_dict(self):
+        return {
+            'error_message': self.error_message,
+            'detail': self.detail
+        }
+
+
+@app.errorhandler(LoanBusinessException)
+def handle_loan_business_exception(ex):
+    return jsonify(
+        error_message=ex.error_message,
+        detail=ex.detail
+    ), ex.status_code
+
+
+def validate_loan_for_business(loan_request):
+    # Age must between 18-70
+    parsed_birth_date = datetime.datetime.strptime(loan_request['customer']['birth_date'], '%Y-%m-%d')
+    today = datetime.date.today()
+    age = today.year - parsed_birth_date.year
+
+    if age < 18 or age > 70:
+        raise LoanBusinessException(
+            error_message="Age must between 18-70 years",
+            status_code=400,
+            detail="Submitted birth date is out of range, age is " + str(age) + " years"
+        )
+
+    # Loan principal amount between 100-99999
+    parsed_principal_amount = loan_request['principal_amount']
+
+    if parsed_principal_amount < 100 or parsed_principal_amount > 99999:
+        raise LoanBusinessException(
+            error_message="Loan principal amount must between 100-99999",
+            status_code=400,
+            detail="Submitted principal amount is out of range: " + str(parsed_principal_amount)
+        )
