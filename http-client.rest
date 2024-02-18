@@ -4,7 +4,7 @@ partner-secret: 'partner-red'
 Content-Type: application/json
 
 {
-  "principal_amount": 20000,
+  "principal_amount": 180000,
   "term_months": 12,
   "collateral": {
     "brand": "Toyota",
