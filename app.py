@@ -6,6 +6,7 @@ import datetime
 import uuid
 import math
 import werkzeug
+from marshmallow import Schema, fields, validate, ValidationError
 
 app = Flask(__name__)
 
@@ -114,9 +115,29 @@ def save_loan_to_database(loan_request, partner_secret):
     return loan
 
 
+class LoanSchema(Schema):
+    principal_amount = fields.Integer(
+        required=True, validate=validate.Range(min=100, max=99999)
+    )
+
+    term_months = fields.Integer(
+        required=True, validate=validate.OneOf([3, 6, 9, 12, 15, 18, 24])
+    )
+
+
+loan_schema = LoanSchema()
+
+
 @app.route('/api/loan', methods=['POST'])
 def submit_loan():
-    validate_loan_for_business(request.json)
+    errors = loan_schema.validate(request.json)
+
+    if errors:
+        raise LoanBusinessException(
+            error_message="Validation failed",
+            status_code=400,
+            detail=str(errors)
+        )
 
     saved_loan = save_loan_to_database(
         request.json, request.headers['partner_secret']
@@ -147,6 +168,8 @@ def track_loan():
         existing_loan.to_dict()
     ), 200
 
+
+# ERROR HANDLERS
 
 @app.errorhandler(werkzeug.exceptions.BadRequest)
 @app.errorhandler(TypeError)
@@ -189,26 +212,25 @@ def handle_loan_business_exception(ex):
         detail=ex.detail
     ), ex.status_code
 
-
-def validate_loan_for_business(loan_request):
-    # Age must between 18-70
-    parsed_birth_date = datetime.datetime.strptime(loan_request['customer']['birth_date'], '%Y-%m-%d')
-    today = datetime.date.today()
-    age = today.year - parsed_birth_date.year
-
-    if age < 18 or age > 70:
-        raise LoanBusinessException(
-            error_message="Age must between 18-70 years",
-            status_code=400,
-            detail="Submitted birth date is out of range, age is " + str(age) + " years"
-        )
-
-    # Loan principal amount between 100-99999
-    parsed_principal_amount = loan_request['principal_amount']
-
-    if parsed_principal_amount < 100 or parsed_principal_amount > 99999:
-        raise LoanBusinessException(
-            error_message="Loan principal amount must between 100-99999",
-            status_code=400,
-            detail="Submitted principal amount is out of range: " + str(parsed_principal_amount)
-        )
+# def validate_loan_for_business(loan_request):
+#     # Age must between 18-70
+#     parsed_birth_date = datetime.datetime.strptime(loan_request['customer']['birth_date'], '%Y-%m-%d')
+#     today = datetime.date.today()
+#     age = today.year - parsed_birth_date.year
+#
+#     if age < 18 or age > 70:
+#         raise LoanBusinessException(
+#             error_message="Age must between 18-70 years",
+#             status_code=400,
+#             detail="Submitted birth date is out of range, age is " + str(age) + " years"
+#         )
+#
+#     # Loan principal amount between 100-99999
+#     parsed_principal_amount = loan_request['principal_amount']
+#
+#     if parsed_principal_amount < 100 or parsed_principal_amount > 99999:
+#         raise LoanBusinessException(
+#             error_message="Loan principal amount must between 100-99999",
+#             status_code=400,
+#             detail="Submitted principal amount is out of range: " + str(parsed_principal_amount)
+#         )
