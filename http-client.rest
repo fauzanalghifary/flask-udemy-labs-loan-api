@@ -1,0 +1,22 @@
+### Create a loan
+POST {{BASE_URL}}/api/loan
+Content-Type: application/json
+
+{
+  "principal_amount": 20000,
+  "term_months": 12,
+  "collateral": {
+    "brand": "Toyota",
+    "model": "Camry",
+    "manufacturing_year": 2022
+  },
+  "customer": {
+    "name": "Clark Kent",
+    "birth_date": "2004-05-24",
+    "monthly_income": 4500,
+    "id_number": "7482-4889"
+  }
+}
+
+### Get loan by id
+GET {{BASE_URL}}/api/loan?loan_id=1

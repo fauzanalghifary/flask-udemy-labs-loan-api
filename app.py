@@ -15,7 +15,6 @@ db = SQLAlchemy(app)
 # We use ProxyFix to enable it: https://flask.palletsprojects.com/en/2.0.x/deploying/wsgi-standalone/#proxy-setups
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
-
 # Used for any other security related needs by extensions or application, i.e. csrf token
 app.config['SECRET_KEY'] = 'mysecretkey'
 
@@ -45,7 +44,7 @@ class Loan(db.Model):
     term_months = db.Column(db.Integer)
     collateral_brand = db.Column(db.String(50))
     collateral_model = db.Column(db.String(50))
-    collateral_manufacturing_year = db.Column(db.Integer) 
+    collateral_manufacturing_year = db.Column(db.Integer)
     customer_name = db.Column(db.String(50))
     customer_birth_date = db.Column(db.DateTime)
     customer_monthly_income = db.Column(db.Integer)
@@ -55,22 +54,21 @@ class Loan(db.Model):
     loan_interest = db.Column(db.Integer)
     monthly_installment = db.Column(db.Integer)
 
-
     def to_dict(self):
         collateral = {}
         collateral['brand'] = self.collateral_brand
         collateral['model'] = self.collateral_model
         collateral['manufacturing_year'] = self.collateral_manufacturing_year
-        
+
         customer = {}
         customer['id_number'] = self.customer_id_number
         customer['birth_date'] = datetime.datetime.strftime(self.customer_birth_date, '%Y-%m-%d')
         customer['monthly_income'] = self.customer_monthly_income
         customer['name'] = self.customer_name
-        
+
         return {
             'loan_id': self.loan_id,
-            'principal_amount': self.principal_amount, 
+            'principal_amount': self.principal_amount,
             'term_months': self.term_months,
             'collateral': collateral,
             'customer': customer,
@@ -89,56 +87,52 @@ def save_loan_to_database(loan_request, partner_secret):
     parsed_principal_amount = loan_request['principal_amount']
     parsed_term_months = loan_request['term_months']
 
-    loan_interest = math.ceil( parsed_principal_amount * parsed_term_months * 0.01 )
-    monthly_installment = math.ceil( (parsed_principal_amount + loan_interest) / parsed_term_months )
-    
+    loan_interest = math.ceil(parsed_principal_amount * parsed_term_months * 0.01)
+    monthly_installment = math.ceil((parsed_principal_amount + loan_interest) / parsed_term_months)
+
     loan = Loan(
-            loan_id = str(uuid.uuid4()),
-            principal_amount = parsed_principal_amount,
-            term_months = parsed_term_months,
-            collateral_brand = loan_request['collateral']['brand'],
-            collateral_model = loan_request['collateral']['model'],
-            collateral_manufacturing_year = loan_request['collateral']['manufacturing_year'],
-            customer_id_number = loan_request['customer']['id_number'],
-            customer_name = loan_request['customer']['name'],
-            customer_monthly_income = loan_request['customer']['monthly_income'],
-            customer_birth_date = parsed_birth_date,
-            created_by = partner_secret,
-            status = 'PENDING',
-            loan_interest = loan_interest,
-            monthly_installment = monthly_installment
-        )
-        
+        loan_id=str(uuid.uuid4()),
+        principal_amount=parsed_principal_amount,
+        term_months=parsed_term_months,
+        collateral_brand=loan_request['collateral']['brand'],
+        collateral_model=loan_request['collateral']['model'],
+        collateral_manufacturing_year=loan_request['collateral']['manufacturing_year'],
+        customer_id_number=loan_request['customer']['id_number'],
+        customer_name=loan_request['customer']['name'],
+        customer_monthly_income=loan_request['customer']['monthly_income'],
+        customer_birth_date=parsed_birth_date,
+        created_by=partner_secret,
+        status='PENDING',
+        loan_interest=loan_interest,
+        monthly_installment=monthly_installment
+    )
+
     db.session.add(loan)
     db.session.commit()
 
     return loan
-    
+
 
 @app.route('/api/loan', methods=['POST'])
 def submit_loan():
     saved_loan = save_loan_to_database(
         request.json, request.headers['partner_secret']
     )
-    
+
     return jsonify(
-            customer_name = saved_loan.customer_name,
-            loan_id = saved_loan.loan_id,
-            status = saved_loan.status
-        ), 201
-        
+        customer_name=saved_loan.customer_name,
+        loan_id=saved_loan.loan_id,
+        status=saved_loan.status
+    ), 201
+
 
 @app.route('/api/loan', methods=['GET'])
 def track_loan():
-    filter_loan = Loan.query.filter( \
-        and_( \
-            Loan.loan_id == request.args['loan_id'], \
-            Loan.created_by == request.headers['partner_secret']
-        )
-    )
-    
+    filter_loan = Loan.query.filter(
+        and_(Loan.loan_id == request.args['loan_id'], Loan.created_by == request.headers['partner_secret']))
+
     existing_loan = filter_loan.first()
-    
+
     return jsonify(
         existing_loan.to_dict()
     ), 200
